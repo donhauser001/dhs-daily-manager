@@ -134,14 +134,31 @@ function wpdm_activate() {
     }
 
     // Insert default categories using direct SQL to ensure proper UTF-8 encoding
-    $wpdb->query("INSERT INTO {$wpdb->prefix}wpdm_category (name, level, description) VALUES 
-        ('生活', 1, '日常生活相关的任务'),
-        ('工作', 1, '工作相关的任务和项目'),
-        ('兴趣', 1, '兴趣爱好相关的活动')
-    ");
+    $wpdb->query("SET NAMES utf8mb4");
+    $wpdb->query("ALTER DATABASE {$wpdb->dbname} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $wpdb->query("ALTER TABLE {$wpdb->prefix}wpdm_category CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    
+    // Clear existing categories
+    $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}wpdm_category");
+    
+    // Insert with proper encoding
+    $wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}wpdm_category (name, level, description) VALUES 
+        (%s, %d, %s),
+        (%s, %d, %s),
+        (%s, %d, %s)",
+        '生活', 1, '日常生活相关的任务',
+        '工作', 1, '工作相关的任务和项目',
+        '兴趣', 1, '兴趣爱好相关的活动'
+    ));
 }
 
 // Load required files
 require_once WPDM_PLUGIN_DIR . 'includes/class-wpdm-tasks.php';
 require_once WPDM_PLUGIN_DIR . 'includes/class-wpdm-category.php';
 require_once WPDM_PLUGIN_DIR . 'includes/class-wpdm-content.php';
+
+// Load admin functionality
+if (is_admin()) {
+    require_once WPDM_PLUGIN_DIR . 'includes/class-wpdm-admin.php';
+    new WPDM_Admin();
+}
