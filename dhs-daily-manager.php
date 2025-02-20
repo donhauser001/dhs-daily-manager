@@ -139,7 +139,6 @@ function wpdm_activate() {
         ('工作', 1, '工作相关的任务和项目'),
         ('兴趣', 1, '兴趣爱好相关的活动')
     ");
-    }
 }
 
 // Load required files
