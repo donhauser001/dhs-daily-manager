@@ -3,6 +3,8 @@ class WPDM_Admin {
     public function __construct() {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+        add_action('admin_post_wpdm_add_task', array($this, 'handle_add_task'));
+        add_action('admin_notices', array($this, 'display_admin_notices'));
     }
     
     public function add_admin_menu() {
@@ -74,5 +76,44 @@ class WPDM_Admin {
         }
         
         require_once plugin_dir_path(dirname(__FILE__)) . 'admin/views/add-task.php';
+    }
+
+    public function display_admin_notices() {
+        if (isset($_GET['message']) && $_GET['message'] === 'task_added') {
+            echo '<div class="notice notice-success is-dismissible"><p>任务已成功添加。</p></div>';
+        }
+        if (isset($_GET['error']) && $_GET['error'] === 'task_add_failed') {
+            echo '<div class="notice notice-error is-dismissible"><p>添加任务时发生错误。</p></div>';
+        }
+    }
+
+    public function handle_add_task() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('您没有足够的权限执行此操作。'));
+        }
+
+        check_admin_referer('add_task', 'wpdm_nonce');
+
+        $task_data = array(
+            'title' => sanitize_text_field($_POST['title']),
+            'category_id' => intval($_POST['category_id']),
+            'parent_id' => !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null,
+            'start_time' => sanitize_text_field($_POST['start_time']),
+            'end_time' => sanitize_text_field($_POST['end_time']),
+            'status' => sanitize_text_field($_POST['status']),
+            'notes' => sanitize_textarea_field($_POST['notes']),
+            'type' => 'task',
+            'value' => ''
+        );
+
+        $tasks = new WPDM_Tasks();
+        $result = $tasks->create($task_data);
+
+        if ($result) {
+            wp_redirect(add_query_arg('message', 'task_added', admin_url('admin.php?page=dhs-daily-manager')));
+        } else {
+            wp_redirect(add_query_arg('error', 'task_add_failed', wp_get_referer()));
+        }
+        exit;
     }
 }

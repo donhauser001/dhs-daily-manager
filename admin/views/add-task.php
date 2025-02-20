@@ -10,7 +10,8 @@ $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}wpdm_category ORD
 <div class="wrap">
     <h1>添加新任务</h1>
     
-    <form method="post" action="">
+    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+        <input type="hidden" name="action" value="wpdm_add_task">
         <?php wp_nonce_field('add_task', 'wpdm_nonce'); ?>
         
         <table class="form-table">
@@ -38,18 +39,26 @@ $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}wpdm_category ORD
                 <td>
                     <select name="parent_id" id="parent_id">
                         <option value="">无父任务</option>
+                        <?php 
+                        $tasks = new WPDM_Tasks();
+                        $existing_tasks = $tasks->get_all();
+                        foreach ($existing_tasks as $task): ?>
+                            <option value="<?php echo esc_attr($task->id); ?>">
+                                <?php echo esc_html($task->title); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </td>
             </tr>
             
             <tr>
                 <th scope="row"><label for="start_time">开始时间</label></th>
-                <td><input name="start_time" type="datetime-local" id="start_time"></td>
+                <td><input name="start_time" type="datetime-local" id="start_time" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" value="<?php echo date('Y-m-d\TH:i'); ?>"></td>
             </tr>
             
             <tr>
                 <th scope="row"><label for="end_time">结束时间</label></th>
-                <td><input name="end_time" type="datetime-local" id="end_time"></td>
+                <td><input name="end_time" type="datetime-local" id="end_time" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" value="<?php echo date('Y-m-d\TH:i', strtotime('+1 hour')); ?>"></td>
             </tr>
             
             <tr>
